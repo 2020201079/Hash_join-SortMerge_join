@@ -72,6 +72,7 @@ int makeSortedSublist(int numOfTuplesInSublist,string inputFile,int sortIndex){
             listOfTuples.clear();
         }
     }
+    Rfile.close();
 
     if(listOfTuples.size() >0){
         sortAndWriteBack(listOfTuples,inputFile,numOfSublist,1);
@@ -80,6 +81,41 @@ int makeSortedSublist(int numOfTuplesInSublist,string inputFile,int sortIndex){
         numOfSublist--;
     }
     return numOfSublist;
+}
+
+vector<ifstream*> getFileHandlers(string fileName,int noOfSublist){
+    vector<ifstream*> ans;
+    for(int i=1;i<=noOfSublist;i++){
+        string sublistFileName = fileName + to_string(i);
+        ifstream* f= new ifstream(sublistFileName);
+        ans.push_back(f);
+    }
+    return ans;
+}
+
+vector<vector<string>> readBlock(ifstream* fileHandler,int numOfTuplesInBlock){
+    //cout<<"read block is called "<<endl;
+    vector<vector<string>> ans;
+    if(!fileHandler->is_open()){
+        //cout<<"entered fileHandler is closed condition "<<endl;
+        return ans;
+    }
+    else{
+        string currStr;
+        while(getline((*fileHandler),currStr)){
+            //cout<<"entered the while loop "<<endl;
+            //cout<<currStr<<endl;
+            vector<string> tuple = splitString(currStr);
+            ans.push_back(tuple);
+            if(ans.size() == numOfTuplesInBlock){
+                // need to sort listOfTuples then write it bac
+                return ans;
+            }
+        }
+        cout<<"Exitied while loop "<<endl;
+        fileHandler->close();
+        return ans;
+    } 
 }
 
 int main(){
@@ -97,4 +133,13 @@ int main(){
 
     cout<<"no of sublist R : "<<noOfSublistR<<endl;
     cout<<"no of sublist S : "<<noOfSublistS<<endl;
+
+    //now read each block from a sublist
+
+    vector<ifstream*> fileHandlers = getFileHandlers(fileNameR,noOfSublistR);
+
+    vector<vector<vector<string>>> blocksFromR;
+    for(int i=0;i<noOfSublistR;i++){
+        blocksFromR.push_back(readBlock(fileHandlers[i],numOfTuplesInBlock));
+    }
 }
