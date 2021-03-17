@@ -78,18 +78,20 @@ void writeBlock(vector<vector<string>>& listOfTuples,fstream* myfile){
     }
 }
 
-void makeSublist(string fileNameR,int numberOfBuckets,int numOfTuplesInBlock){
+vector<int> makeSublist(string fileNameR,int numberOfBuckets,int numOfTuplesInBlock,int commonIndex){
+    vector<int> countTuplesInBucket(numberOfBuckets,0);
     vector<fstream*> fileHandlersR = getFileHandlers(fileNameR,numberOfBuckets);
     vector<vector<vector<string>>> bucketsOfR(numberOfBuckets);
     ifstream Rfile(fileNameR);
     while(Rfile.is_open()){
         vector<vector<string>> currBlock = readBlock(&Rfile,numOfTuplesInBlock);
         for(auto tuple : currBlock){
-            int hashVal = hashFunc(tuple[1],numberOfBuckets);
+            int hashVal = hashFunc(tuple[commonIndex],numberOfBuckets);
             if(bucketsOfR[hashVal].size()<numOfTuplesInBlock){
                 bucketsOfR[hashVal].push_back(tuple);
             }
             else{
+                countTuplesInBucket[hashVal] += bucketsOfR[hashVal].size();
                 writeBlock(bucketsOfR[hashVal],fileHandlersR[hashVal]);
                 bucketsOfR[hashVal].clear();
                 bucketsOfR[hashVal].push_back(tuple);
@@ -98,13 +100,15 @@ void makeSublist(string fileNameR,int numberOfBuckets,int numOfTuplesInBlock){
     }
     for(int i=0;i<bucketsOfR.size();i++){
         if(bucketsOfR[i].size()!=0){
+            countTuplesInBucket[i] += bucketsOfR[i].size();
             writeBlock(bucketsOfR[i],fileHandlersR[i]);
+            bucketsOfR[i].clear();
         }
-        bucketsOfR[i].clear();
     }
     for(auto fh:fileHandlersR){
         fh->close();
     }
+    return countTuplesInBucket;
 }
 
 int main(){
@@ -115,11 +119,78 @@ int main(){
 
     string fileNameR = "inputR";
     string fileNameS = "inputS";
-    string outputFileName = fileNameR+"_"+fileNameS+"_join.txt";
+    string outputFileName = fileNameR+"_"+fileNameS+"_hashJoin.txt";
     ofstream outputHandler(outputFileName);
 
     //need to read one block from the file. Assign the bucket for each tuple in the block
     // hash values will range from 0 to m-2
-    makeSublist(fileNameR,numberOfBuckets,numOfTuplesInBlock);
-    makeSublist(fileNameS,numberOfBuckets,numOfTuplesInBlock);
+    vector<int> countTuplesInBucketR = makeSublist(fileNameR,numberOfBuckets,numOfTuplesInBlock,1);
+    vector<int> countTuplesInBucketS = makeSublist(fileNameS,numberOfBuckets,numOfTuplesInBlock,0);
+
+    for(int i=0;i<countTuplesInBucketR.size();i++){
+        cout<<"Number of tuples in bucket "<<i<<" for R is "<<countTuplesInBucketR[i]<<endl;
+    }
+
+    for(int i=0;i<countTuplesInBucketS.size();i++){
+        cout<<"Number of tuples in bucket "<<i<<" for S is "<<countTuplesInBucketS[i]<<endl;
+    }
+
+    //after phase 1 now need to merge the hashed buckets
+    for(int i=0;i<numberOfBuckets;i++){
+        string fileNameMax;
+        string fileNameMin;
+        int minTupleCount;
+        int maxTupleCount;
+        if(countTuplesInBucketR[i] >= countTuplesInBucketS[i]){
+            fileNameMax = fileNameR;
+            maxTupleCount = countTuplesInBucketR[i];
+            fileNameMin = fileNameS;
+            minTupleCount = countTuplesInBucketS[i];
+        }
+        else{
+            fileNameMax = fileNameS;
+            maxTupleCount = countTuplesInBucketS[i];
+            fileNameMin = fileNameR;
+            minTupleCount = countTuplesInBucketR[i];
+        }
+        if(minTupleCount > (M-1)*numOfTuplesInBlock){
+            cout<<"Bucket number "<<i<<" cannot be merged because the smaller bucket does not fit in memory "<<endl; 
+            return -1;
+        }
+
+        //read the smaller file name in the memory
+        string sublistFileNameSmaller = fileNameMin +"_bucket_no_"+to_string(i);
+        string sublistFileNameLarger = fileNameMax +"_bucket_no_"+to_string(i);
+        ifstream fmin(sublistFileNameSmaller);
+        ifstream fmax(sublistFileNameLarger);
+        string currString;
+        vector<vector<string>> smallerRel;
+        while(getline(fmin,currString)){
+            smallerRel.push_back(splitString(currString));
+        }
+        fmin.close();
+        while(fmax.is_open()){
+            vector<vector<string>> currBlock = readBlock(&fmax,numOfTuplesInBlock);
+            for(auto tupleMax:currBlock){
+                for(auto tupleMin:smallerRel) {
+                    if(fileNameMax == fileNameR){ //R is max S is Min
+                        if(tupleMax[1] == tupleMin[0]){
+                            string outputString = tupleMax[0]+" "+tupleMax[1]+" "+tupleMin[1];
+                            outputHandler<<outputString<<endl;
+                        }
+                    }
+                    else{ //R is min S is max
+                        if(tupleMax[0] == tupleMin[1]){
+                            string outputString = tupleMin[0]+" "+tupleMin[1]+" "+tupleMax[1];
+                            outputHandler<<outputString<<endl;
+                        }
+                    }
+                }
+            } 
+        }
+        fmax.close();
+    }
+    outputHandler.close();
+    cout<<"finished joining "<<endl;
+
 }
