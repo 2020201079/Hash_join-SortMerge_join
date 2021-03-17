@@ -6,6 +6,7 @@
         "iosfwd": "cpp",
         "iostream": "cpp",
         "utility": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "string": "cpp"
     }
 }
