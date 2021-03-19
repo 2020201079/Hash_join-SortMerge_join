@@ -5,6 +5,8 @@
 #include<sstream>
 #include<algorithm>
 #include <queue>
+#include <stdio.h>
+
 
 using namespace std;
 
@@ -192,5 +194,13 @@ int main(){
     }
     outputHandler.close();
     cout<<"finished joining "<<endl;
+
+    cout<<"deleting intermediate files "<<endl;
+    for(int i=0;i<numberOfBuckets;i++){
+        string deleteR = fileNameR +"_bucket_no_"+to_string(i);
+        string deleteS = fileNameS +"_bucket_no_"+to_string(i);
+        remove(deleteR.c_str());
+        remove(deleteS.c_str());
+    }
 
 }
