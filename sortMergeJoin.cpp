@@ -5,6 +5,7 @@
 #include<sstream>
 #include<algorithm>
 #include <queue>
+#include <chrono> 
 
 using namespace std;
 
@@ -143,13 +144,19 @@ void print_pq(priority_queue<pair<vector<string>,int>,vector<pair<vector<string>
     }
 }
 
-int main(){
-    int numOfTuplesInBlock = 4; //given in assignment
-    int M = 10; // number of blocks in main memory
+int main(int argc, char** argv){
+    if(argc != 4){
+        cout<<"Input arguments are wrong the format is "<<endl;
+        cout<<"a.out inputR inputS M"<<endl;
+        return 0;
+    }
+    auto start = chrono::high_resolution_clock::now();
+    int numOfTuplesInBlock = 100; //given in assignment
+    int M = stoi(argv[3]); // number of blocks in main memory
     int numOfTuplesInSublist = M*numOfTuplesInBlock;
 
-    string fileNameR = "inputR";
-    string fileNameS = "inputS";
+    string fileNameR = argv[1];
+    string fileNameS = argv[2];
     string outputFileName = fileNameR+"_"+fileNameS+"_join.txt";
     ofstream outputHandler(outputFileName);
     
@@ -160,6 +167,10 @@ int main(){
 
     cout<<"no of sublist R : "<<noOfSublistR<<endl;
     cout<<"no of sublist S : "<<noOfSublistS<<endl;
+
+    if(noOfSublistR + noOfSublistS > M){
+        cout<<"cannot fit in memory check B(R) + B(S) < M^2"<<endl;
+    }
 
     //now read each block from a sublist
 
@@ -281,5 +292,7 @@ int main(){
             }
         }
     }
-
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::microseconds>(stop - start); 
+    cout <<"M : "<<M<<" time to sort in microseconds " <<duration.count() << endl; 
 }

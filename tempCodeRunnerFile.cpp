@@ -1,1 +1,0 @@
-outputHandler<<outputString<<endl;

@@ -6,7 +6,7 @@
 #include<algorithm>
 #include <queue>
 #include <stdio.h>
-
+#include <chrono> 
 
 using namespace std;
 
@@ -113,14 +113,21 @@ vector<int> makeSublist(string fileNameR,int numberOfBuckets,int numOfTuplesInBl
     return countTuplesInBucket;
 }
 
-int main(){
-    int numOfTuplesInBlock = 4; //given in assignment
-    int M = 10; // number of blocks in main memory
+int main(int argc, char** argv){
+    if(argc != 4){
+        cout<<"Input arguments are wrong the format is "<<endl;
+        cout<<"a.out inputR inputS M"<<endl;
+        return 0;
+    }
+    auto start = chrono::high_resolution_clock::now();
+    int numOfTuplesInBlock = 100; //given in assignment
+    int M = stoi(argv[3]); // number of blocks in main memory
     int numOfTuplesInSublist = M*numOfTuplesInBlock;
     int numberOfBuckets = M-1;
 
-    string fileNameR = "inputR";
-    string fileNameS = "inputS";
+
+    string fileNameR = argv[1];
+    string fileNameS = argv[2];
     string outputFileName = fileNameR+"_"+fileNameS+"_hashJoin.txt";
     ofstream outputHandler(outputFileName);
 
@@ -139,6 +146,7 @@ int main(){
 
     //after phase 1 now need to merge the hashed buckets
     for(int i=0;i<numberOfBuckets;i++){
+        cout<<"merging bucket number "<<i<<endl;
         string fileNameMax;
         string fileNameMin;
         int minTupleCount;
@@ -194,6 +202,10 @@ int main(){
     }
     outputHandler.close();
     cout<<"finished joining "<<endl;
+
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::microseconds>(stop - start); 
+    cout <<"M : "<<M<<" time to sort in microseconds " <<duration.count() << endl; 
 
     cout<<"deleting intermediate files "<<endl;
     for(int i=0;i<numberOfBuckets;i++){
