@@ -10,6 +10,18 @@
 
 using namespace std;
 
+string getFileName(const string& s) {
+
+   char sep = '/';
+
+   size_t i = s.rfind(sep, s.length());
+   if (i != string::npos) {
+      return(s.substr(i+1, s.length() - i));
+   }
+
+   return("");
+}
+
 int hashFunc(string str,int m) // here M-1 should be passed
 {
     int p = 31;
@@ -128,7 +140,7 @@ int main(int argc, char** argv){
 
     string fileNameR = argv[1];
     string fileNameS = argv[2];
-    string outputFileName = fileNameR+"_"+fileNameS+"_hashJoin.txt";
+    string outputFileName = getFileName(fileNameR)+"_"+getFileName(fileNameS)+"_join.txt";
     ofstream outputHandler(outputFileName);
 
     //need to read one block from the file. Assign the bucket for each tuple in the block

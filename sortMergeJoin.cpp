@@ -9,6 +9,22 @@
 
 using namespace std;
 
+string getFileName(const string& s) {
+
+   char sep = '/';
+
+#ifdef _WIN32
+   sep = '\\';
+#endif
+
+   size_t i = s.rfind(sep, s.length());
+   if (i != string::npos) {
+      return(s.substr(i+1, s.length() - i));
+   }
+
+   return("");
+}
+
 bool sortcol1( const vector<string>& v1,const vector<string>& v2 ) { 
     return v1[1] < v2[1]; 
 }
@@ -157,7 +173,7 @@ int main(int argc, char** argv){
 
     string fileNameR = argv[1];
     string fileNameS = argv[2];
-    string outputFileName = fileNameR+"_"+fileNameS+"_join.txt";
+    string outputFileName = getFileName(fileNameR)+"_"+getFileName(fileNameS)+"_join.txt";
     ofstream outputHandler(outputFileName);
     
     // for part1 we need to read M blocks from R and S
